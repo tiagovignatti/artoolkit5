@@ -50,21 +50,24 @@ INC_DIR= ../../include
 LIB_DIR= ../../lib
 BIN_DIR= ../../bin
 
-CC=@CC@
+CC=g++
 LDFLAG=@LDFLAG@ -L$(LIB_DIR)/@SYSTEM@ -L$(LIB_DIR)
 LIBS= -lARgsub_lite -lARvideo -lAR -lARICP -lAR @LIBS@
 CFLAG= @CFLAG@ -I$(INC_DIR)
 
 OBJS =
-HEADERS =
+HEADERS = imageloader.h
 
 all: $(BIN_DIR)/simpleLite
 
-$(BIN_DIR)/simpleLite: simpleLite.o $(OBJS)
-	$(CC) -o $(BIN_DIR)/simpleLite simpleLite.o $(OBJS) $(LDFLAG) $(LIBS)
+$(BIN_DIR)/simpleLite: simpleLite.o imageloader.o $(OBJS)
+	$(CC) -o $(BIN_DIR)/simpleLite simpleLite.o imageloader.o $(OBJS) $(LDFLAG) $(LIBS)
 
 simpleLite.o: simpleLite.c $(HEADERS)
 	$(CC) -c $(CFLAG) simpleLite.c
+
+imageloader.o: imageloader.cpp $(HEADERS)
+	$(CC) -c $(CFLAG) imageloader.cpp
 
 clean:
 	rm -f *.o

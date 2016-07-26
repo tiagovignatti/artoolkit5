@@ -70,6 +70,7 @@
 #include <AR/param.h>			// arParamDisp()
 #include <AR/ar.h>
 #include <AR/gsub_lite.h>
+#include "imageloader.h"
 
 // ============================================================================
 //	Constants
@@ -125,6 +126,62 @@ static void printMode();
 // ============================================================================
 //	Functions
 // ============================================================================
+
+//Makes the image into a texture, and returns the id of the texture
+GLuint loadTexture(Image* image) {
+        GLuint textureId;
+        glGenTextures(1, &textureId); //Make room for our texture
+        glBindTexture(GL_TEXTURE_2D, textureId); //Tell OpenGL which texture to edit
+        //Map the image to the texture
+        glTexImage2D(GL_TEXTURE_2D,                //Always GL_TEXTURE_2D
+                        0,                            //0 for now
+                        GL_RGB,                       //Format OpenGL uses for image
+                        image->width, image->height,  //Width and height
+                        0,                            //The border of the image
+                        GL_RGB, //GL_RGB, because pixels are stored in RGB format
+                        GL_UNSIGNED_BYTE, //GL_UNSIGNED_BYTE, because pixels are stored
+                        //as unsigned numbers
+                        image->pixels);               //The actual pixel data
+        return textureId; //Returns the id of the texture
+}
+
+GLuint _textureId;
+GLUquadric *quad;
+float rotate;
+
+void initSphere() {
+	glEnable(GL_NORMALIZE);
+	glEnable(GL_COLOR_MATERIAL);
+	quad = gluNewQuadric();
+
+	Image* image = loadBMP("earth.bmp");
+	_textureId = loadTexture(image);
+	delete image;
+}
+
+static void DrawSphere(void)
+{
+	glEnable(GL_TEXTURE_2D);
+	glBindTexture(GL_TEXTURE_2D, _textureId);
+
+	//Bottom
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+	glRotatef(180,1.0f,0.0f,0.0f);
+	glRotatef(rotate,0.0f,0.0f,1.0f);
+	gluQuadricTexture(quad, 1);
+	gluSphere(quad, 25, 100, 20);
+
+	glDisable(GL_TEXTURE_2D);
+}
+
+static void DrawSphereUpdate(void)
+{
+        rotate+=2.0f;
+        if (rotate>360.f)
+                rotate-=360;
+}
 
 // Something to look at, draw a rotating colour cube.
 static void DrawCube(void)
@@ -377,7 +434,8 @@ static void mainLoop(void)
 	ms_prev = ms;
 	
 	// Update drawing.
-	DrawCubeUpdate(s_elapsed);
+	//DrawCubeUpdate(s_elapsed);
+	DrawSphereUpdate();
 	
 	// Grab a video frame.
 	if ((image = arVideoGetImage()) != NULL) {
@@ -495,7 +553,8 @@ static void Display(void)
 #endif
 
 		// All lighting and geometry to be drawn relative to the marker goes here.
-		DrawCube();
+		//DrawCube();
+		DrawSphere();
 	
 	} // gPatt_found
 	
@@ -559,6 +618,8 @@ int main(int argc, char** argv)
 	} else {
 		glutInitWindowSize(windowWidth, windowHeight);
 		glutCreateWindow(argv[0]);
+
+		initSphere();
 	}
 
 	// Setup ARgsub_lite library for current OpenGL context.
